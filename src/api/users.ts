@@ -1,0 +1,44 @@
+import { api } from './client';
+import type {
+  CreateStaffRequest,
+  SpringPage,
+  UserDetails,
+  UserSummary,
+  WalletView,
+} from './types';
+
+export async function searchUsers(
+  q: string | undefined,
+  page = 0,
+  size = 25,
+): Promise<SpringPage<UserSummary>> {
+  const { data } = await api.get<SpringPage<UserSummary>>('/admin/users', {
+    params: { q: q || undefined, page, size },
+  });
+  return data;
+}
+
+export async function userDetails(id: string): Promise<UserDetails> {
+  const { data } = await api.get<UserDetails>(`/admin/users/${id}`);
+  return data;
+}
+
+export async function userWallet(id: string): Promise<WalletView> {
+  const { data } = await api.get<WalletView>(`/admin/users/${id}/wallet`);
+  return data;
+}
+
+export async function freezeUser(id: string): Promise<UserDetails> {
+  const { data } = await api.post<UserDetails>(`/admin/users/${id}/freeze`);
+  return data;
+}
+
+export async function reinstateUser(id: string): Promise<UserDetails> {
+  const { data } = await api.post<UserDetails>(`/admin/users/${id}/reinstate`);
+  return data;
+}
+
+export async function createStaff(req: CreateStaffRequest): Promise<UserDetails> {
+  const { data } = await api.post<UserDetails>('/admin/staff', req);
+  return data;
+}

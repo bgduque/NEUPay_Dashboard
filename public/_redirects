@@ -1,0 +1,3 @@
+# Single-page app — every unmatched path falls back to index.html so
+# react-router can take over. Amplify Hosting and Netlify both honour this.
+/*  /index.html  200

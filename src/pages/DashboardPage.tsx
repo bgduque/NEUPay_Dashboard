@@ -1,0 +1,220 @@
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import {
+  Wallet,
+  Users,
+  TrendingUp,
+  Coins,
+  ArrowUpRight,
+  Receipt,
+} from 'lucide-react';
+import { adminTransactions, cashInStats } from '@/api/transactions';
+import { searchUsers } from '@/api/users';
+import { Card, Section, StatCard } from '@/components/ui/Card';
+import { CashInChart } from '@/components/CashInChart';
+import { Empty, Spinner } from '@/components/ui/Empty';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Input';
+import { RoleBadge } from '@/components/RoleBadge';
+import { formatPHP, formatRelative } from '@/lib/format';
+import { usePageHeader } from '@/components/Layout';
+import { useAuth } from '@/auth/store';
+import { personaFor, personaLabel } from '@/lib/roles';
+
+export default function DashboardPage() {
+  const session = useAuth((s) => s.session);
+  const setHeader = usePageHeader((s) => s.set);
+  const [days, setDays] = useState<number>(30);
+  const [metric, setMetric] = useState<'count' | 'amount'>('count');
+
+  useEffect(() => {
+    const persona = session ? personaFor(session.user.role, session.user.program) : 'CASHIER';
+    setHeader({
+      title: `Welcome, ${session?.user.fullName.split(' ')[0] ?? 'there'}`,
+      description: `Signed in as ${personaLabel(persona)} • ID ${session?.user.idNumber ?? ''}`,
+    });
+  }, [session, setHeader]);
+
+  const stats = useQuery({
+    queryKey: ['cash-in-stats', days],
+    queryFn: () => cashInStats(days),
+  });
+
+  const recent = useQuery({
+    queryKey: ['admin-transactions', 'TOP_UP', 0, 8],
+    queryFn: () => adminTransactions('TOP_UP', 0, 8),
+  });
+
+  const users = useQuery({
+    queryKey: ['admin-users-summary'],
+    queryFn: () => searchUsers(undefined, 0, 1),
+  });
+
+  const totals = computeTotals(stats.data?.buckets);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard
+          label={`Cash-ins · last ${days}d`}
+          value={totals.totalCount.toString()}
+          hint={`${totals.uniqueRoles} role${totals.uniqueRoles === 1 ? '' : 's'} active`}
+          icon={<TrendingUp className="size-4" />}
+          accent="brand"
+        />
+        <StatCard
+          label="Total credited"
+          value={formatPHP(totals.totalAmount)}
+          hint={`across ${totals.totalCount} transactions`}
+          icon={<Coins className="size-4" />}
+          accent="gold"
+        />
+        <StatCard
+          label="Top recipient role"
+          value={totals.topRole ?? '—'}
+          hint={totals.topRoleSummary}
+          icon={<Wallet className="size-4" />}
+          accent="emerald"
+        />
+        <StatCard
+          label="Registered users"
+          value={users.data ? users.data.totalElements.toLocaleString() : '—'}
+          hint="across students, faculty, and staff"
+          icon={<Users className="size-4" />}
+          accent="rose"
+        />
+      </div>
+
+      <Section
+        title="Cash-ins by recipient role"
+        description={`Daily count and total over the last ${days} days, broken down by who received the funds.`}
+        trailing={
+          <div className="flex items-center gap-2">
+            <Select
+              aria-label="Metric"
+              value={metric}
+              onChange={(e) => setMetric(e.target.value as 'count' | 'amount')}
+              options={[
+                { value: 'count',  label: 'By count' },
+                { value: 'amount', label: 'By amount' },
+              ]}
+              className="w-32"
+            />
+            <Select
+              aria-label="Time range"
+              value={String(days)}
+              onChange={(e) => setDays(Number(e.target.value))}
+              options={[
+                { value: '7',  label: 'Last 7 days' },
+                { value: '14', label: 'Last 14 days' },
+                { value: '30', label: 'Last 30 days' },
+                { value: '90', label: 'Last 90 days' },
+              ]}
+              className="w-36"
+            />
+          </div>
+        }
+      >
+        <CashInChart data={stats.data} isLoading={stats.isLoading} metric={metric} />
+      </Section>
+
+      <Section
+        title="Recent cash-ins"
+        description="Most recent wallet credits across the entire university."
+        trailing={
+          <Link to="/transactions">
+            <Button variant="ghost" size="sm">
+              View all
+              <ArrowUpRight className="size-3.5" />
+            </Button>
+          </Link>
+        }
+      >
+        {recent.isLoading ? (
+          <div className="flex justify-center py-10"><Spinner /></div>
+        ) : !recent.data || recent.data.items.length === 0 ? (
+          <Empty
+            icon={<Receipt className="size-8" />}
+            title="No cash-ins yet"
+            description="Once cashiers credit wallets through the dashboard or iOS app, they'll show up here."
+            action={<Link to="/cash-in"><Button>Go to Cash In</Button></Link>}
+          />
+        ) : (
+          <div className="divide-y divide-border-subtle -mx-2">
+            {recent.data.items.map((t) => (
+              <div key={t.id} className="flex items-center gap-4 px-2 py-3 row-hover rounded-lg">
+                <div className="size-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 grid place-items-center">
+                  <Coins className="size-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-semibold text-text-primary truncate max-w-[28ch]">
+                      {t.recipientName}
+                    </span>
+                    <RoleBadge role={t.recipientRole} />
+                  </div>
+                  <div className="text-xs text-text-tertiary mt-0.5">
+                    {t.title}
+                    {t.cashierName && (
+                      <>
+                        <span className="mx-1.5">·</span>
+                        Cashed in by <span className="text-text-secondary font-medium">{t.cashierName}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums">
+                    {formatPHP(t.amount)}
+                  </div>
+                  <div className="text-[11px] text-text-tertiary">
+                    {formatRelative(t.occurredAt)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Card className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <div className="text-sm font-semibold text-text-primary">Need to credit a wallet?</div>
+          <div className="text-xs text-text-tertiary mt-1">
+            Open the Cash In tool. You can either scan a CASH_IN QR or top up directly with password verification.
+          </div>
+        </div>
+        <Link to="/cash-in"><Button>Cash In a Wallet</Button></Link>
+      </Card>
+    </div>
+  );
+}
+
+function computeTotals(buckets: { role: string; count: number; totalAmount: string }[] | undefined) {
+  let totalCount = 0;
+  let totalAmount = 0;
+  const byRole = new Map<string, { count: number; amount: number }>();
+  for (const b of buckets ?? []) {
+    totalCount += b.count;
+    const amt = Number(b.totalAmount);
+    totalAmount += amt;
+    const cur = byRole.get(b.role) ?? { count: 0, amount: 0 };
+    byRole.set(b.role, { count: cur.count + b.count, amount: cur.amount + amt });
+  }
+  let topRole: string | null = null;
+  let topAmount = 0;
+  byRole.forEach((v, k) => {
+    if (v.amount > topAmount) {
+      topAmount = v.amount;
+      topRole = k;
+    }
+  });
+  return {
+    totalCount,
+    totalAmount,
+    topRole,
+    topRoleSummary: topRole ? formatPHP(topAmount) : 'No activity yet',
+    uniqueRoles: byRole.size,
+  };
+}
