@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ToastViewport } from './ui/Toast';
 import { MobileSidebar } from './MobileSidebar';
+import { useIdleTimeout } from '@/auth/useIdleTimeout';
 
 interface PageHeaderState {
   title: string;
@@ -23,6 +24,7 @@ export const usePageHeader = create<PageHeaderState>((set) => ({
 export function Layout({ children }: { children?: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { title, description, actions } = usePageHeader();
+  useIdleTimeout();
   return (
     <div className="flex min-h-full">
       <Sidebar />

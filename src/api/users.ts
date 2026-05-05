@@ -1,8 +1,11 @@
 import { api } from './client';
 import type {
+  ChangeRoleRequest,
   CreateStaffRequest,
+  CreateUserRequest,
   SpringPage,
   UserDetails,
+  UserRole,
   UserSummary,
   WalletView,
 } from './types';
@@ -40,5 +43,16 @@ export async function reinstateUser(id: string): Promise<UserDetails> {
 
 export async function createStaff(req: CreateStaffRequest): Promise<UserDetails> {
   const { data } = await api.post<UserDetails>('/admin/staff', req);
+  return data;
+}
+
+export async function createUser(req: CreateUserRequest): Promise<UserDetails> {
+  const { data } = await api.post<UserDetails>('/admin/users', req);
+  return data;
+}
+
+export async function changeUserRole(id: string, role: UserRole): Promise<UserDetails> {
+  const body: ChangeRoleRequest = { role };
+  const { data } = await api.patch<UserDetails>(`/admin/users/${id}/role`, body);
   return data;
 }

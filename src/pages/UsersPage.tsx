@@ -50,12 +50,20 @@ export default function UsersPage() {
       title: 'Users',
       description: 'Search students, faculty, and staff. Cashiers can read; admins manage.',
       actions: isAdmin ? (
-        <Link to="/staff/new">
-          <Button>
-            <UserPlus className="size-4" />
-            New Staff
-          </Button>
-        </Link>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Link to="/staff/new">
+            <Button fullWidth>
+              <UserPlus className="size-4" />
+              New Staff
+            </Button>
+          </Link>
+          <Link to="/users/new">
+            <Button variant="secondary" fullWidth>
+              <UserPlus className="size-4" />
+              New User
+            </Button>
+          </Link>
+        </div>
       ) : null,
     });
   }, [setHeader, isAdmin]);

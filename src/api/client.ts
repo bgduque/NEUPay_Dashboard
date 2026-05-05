@@ -22,21 +22,18 @@ interface DeviceContext {
   deviceId: string;
 }
 
-const DEVICE_KEY = 'neu-device-id';
-
-function getOrCreateDeviceId(): string {
+// Device ID is intentionally NOT persisted to localStorage / cookies. The
+// session itself doesn't survive a reload, so a fresh device id per page
+// load is fine for refresh-token correlation within one session.
+function newDeviceId(): string {
   try {
-    const existing = localStorage.getItem(DEVICE_KEY);
-    if (existing) return existing;
-    const fresh = `web-${crypto.randomUUID()}`;
-    localStorage.setItem(DEVICE_KEY, fresh);
-    return fresh;
+    return `web-${crypto.randomUUID()}`;
   } catch {
     return `web-ephemeral-${Math.random().toString(36).slice(2)}`;
   }
 }
 
-const device: DeviceContext = { deviceId: getOrCreateDeviceId() };
+const device: DeviceContext = { deviceId: newDeviceId() };
 
 interface TokenSlot {
   access: string | null;

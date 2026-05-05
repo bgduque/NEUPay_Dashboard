@@ -120,6 +120,23 @@ export interface CreateStaffRequest {
   role: 'CASHIER' | 'ADMIN';
 }
 
+export interface CreateUserRequest {
+  fullName: string;
+  email: string;
+  idNumber: string;
+  temporaryPassword: string;
+  role: UserRole;
+  /** Free-form program / department label, optional. */
+  program?: string | null;
+  /** Optional opening wallet balance in PHP. Recorded as a TOP_UP transaction. */
+  initialBalance?: string | null;
+  initialBalanceNote?: string | null;
+}
+
+export interface ChangeRoleRequest {
+  role: UserRole;
+}
+
 export interface AdminTopUpRequest {
   userId: string;
   amount: string;   // BigDecimal as string

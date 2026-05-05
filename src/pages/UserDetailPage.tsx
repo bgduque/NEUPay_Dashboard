@@ -12,9 +12,11 @@ import {
   IdCard,
   Wallet,
 } from 'lucide-react';
-import { freezeUser, reinstateUser, userDetails, userWallet } from '@/api/users';
+import { changeUserRole, freezeUser, reinstateUser, userDetails, userWallet } from '@/api/users';
+import type { UserRole } from '@/api/types';
 import { Card, Section } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Empty';
 import { RoleBadge, StatusBadge } from '@/components/RoleBadge';
 import { toast } from '@/components/ui/Toast';
@@ -65,6 +67,20 @@ export default function UserDetailPage() {
     onError: () => toast.error('Could not reinstate the account.'),
   });
 
+  const roleChange = useMutation({
+    mutationFn: (newRole: UserRole) => changeUserRole(id, newRole),
+    onSuccess: (updated) => {
+      toast.success(`Role updated to ${updated.role}.`);
+      qc.invalidateQueries({ queryKey: ['user-detail', id] });
+      qc.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? 'Could not change the role.';
+      toast.error(msg);
+    },
+  });
+
   useEffect(() => {
     setHeader({
       title: detail.data?.fullName ?? 'User',
@@ -108,13 +124,13 @@ export default function UserDetailPage() {
           <Field icon={<CalendarClock className="size-3.5" />} label="Last login" value={u.lastLoginAt ? formatRelative(u.lastLoginAt) : 'Never'} />
         </dl>
 
-        {!isStaff && canFreeze && (
+        {canFreeze && (
           <div className="border-t border-border-subtle pt-4 mt-2">
             <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-text-tertiary mb-2">
               Account control
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              {isSuspended ? (
+              {!isStaff && (isSuspended ? (
                 <Button
                   variant="primary"
                   loading={reinstate.isPending}
@@ -134,11 +150,32 @@ export default function UserDetailPage() {
                   }}
                 >
                   <ShieldOff className="size-4" />
-                  Freeze account
+                  Delete (freeze)
                 </Button>
-              )}
+              ))}
+              <Select
+                aria-label="Change role"
+                value={u.role}
+                disabled={roleChange.isPending}
+                onChange={(e) => {
+                  const next = e.target.value as UserRole;
+                  if (next === u.role) return;
+                  if (confirm(`Change ${u.fullName}'s role from ${u.role} to ${next}?`)) {
+                    roleChange.mutate(next);
+                  }
+                }}
+                options={[
+                  { value: 'STUDENT', label: 'Student' },
+                  { value: 'FACULTY', label: 'Faculty' },
+                  { value: 'CASHIER', label: 'Cashier' },
+                  { value: 'ADMIN',   label: 'Admin' },
+                ]}
+                className="w-44"
+              />
               <p className="text-[11px] text-text-tertiary">
-                Freezes the wallet and prevents new sign-ins. Reversible.
+                {!isStaff
+                  ? 'Freeze suspends sign-ins and locks the wallet. Use the dropdown to reassign the role.'
+                  : 'Reassign role from the dropdown. Staff accounts are not freezable from this dashboard.'}
               </p>
             </div>
           </div>
