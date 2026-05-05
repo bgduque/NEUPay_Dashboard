@@ -112,14 +112,6 @@ export interface SpringPage<T> {
   empty: boolean;
 }
 
-export interface CreateStaffRequest {
-  fullName: string;
-  email: string;
-  idNumber: string;
-  temporaryPassword: string;
-  role: 'CASHIER' | 'ADMIN';
-}
-
 export interface CreateUserRequest {
   fullName: string;
   email: string;

@@ -1,13 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { IdCard, Lock, ShieldCheck } from 'lucide-react';
+import { IdCard, Lock } from 'lucide-react';
 import { useAuth } from '@/auth/store';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { isStaffRole } from '@/lib/roles';
 
-const APP_NAME = import.meta.env.VITE_NEU_APP_NAME ?? 'NEU Cashier Dashboard';
+const APP_NAME = import.meta.env.VITE_NEU_APP_NAME ?? 'NeuPay Dashboard';
 const ENV_LABEL = import.meta.env.VITE_NEU_ENV_LABEL ?? '';
 
 export default function LoginPage() {
@@ -33,7 +33,6 @@ export default function LoginPage() {
     setLocalError(null);
     try {
       await signIn(principal.trim(), password);
-      // Read fresh session from store after successful sign-in.
       const next = useAuth.getState().session;
       if (next && !isStaffRole(next.user.role)) {
         await useAuth.getState().signOut();
@@ -49,64 +48,45 @@ export default function LoginPage() {
   const shownError = localError ?? error;
 
   return (
-    <div className="min-h-full grid lg:grid-cols-2 bg-surface-canvas">
-      {/* Left: brand panel */}
-      <aside className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950 text-white relative overflow-hidden">
-        <div className="absolute -top-32 -right-24 size-96 rounded-full bg-brand-400/20 blur-3xl" />
-        <div className="absolute -bottom-24 -left-32 size-96 rounded-full bg-gold-500/15 blur-3xl" />
-        <div className="relative">
-          <div className="flex items-center gap-3">
-            <div className="size-12 rounded-2xl bg-white/10 grid place-items-center text-gold-400 font-bold text-lg">
-              NEU
-            </div>
-            <div>
-              <div className="text-base font-semibold">NeuPay Console</div>
-              <div className="text-xs text-white/70 tracking-wide uppercase">
-                Cashier &amp; Admin Dashboard
-              </div>
-            </div>
-          </div>
-          <h1 className="mt-16 text-4xl font-bold tracking-tight leading-tight">
-            Add funds.<br />Read balances.<br />
-            <span className="text-gold-400">Never deduct.</span>
-          </h1>
-          <p className="mt-6 text-sm text-white/80 max-w-sm leading-relaxed">
-            The mediator console for the NeuPay platform. Students and faculty pay on the iOS app — cashiers use this dashboard to credit wallets and review office activity.
-          </p>
-        </div>
-        <div className="relative flex items-center gap-3 text-xs text-white/70">
-          <ShieldCheck className="size-4 text-gold-400" />
-          <span>JWT auth · BCrypt hashed · audit-logged operations</span>
-        </div>
-      </aside>
+    <div className="relative min-h-full flex items-center justify-center overflow-hidden bg-surface-canvas px-4 py-10">
+      {/* Animated background — gradient blobs */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-40 -left-32 size-[28rem] rounded-full bg-brand-500/30 blur-3xl login-blob" />
+        <div className="absolute top-1/3 -right-40 size-[32rem] rounded-full bg-gold-500/25 blur-3xl login-blob-slow" />
+        <div className="absolute -bottom-40 left-1/4 size-[26rem] rounded-full bg-brand-700/30 blur-3xl login-blob" />
+        <div
+          className="absolute inset-0 opacity-[0.06] dark:opacity-[0.08]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(0,0,0,0.45) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.45) 1px, transparent 1px)',
+            backgroundSize: '36px 36px',
+            maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
+          }}
+        />
+      </div>
 
-      {/* Right: form */}
-      <main className="flex flex-col justify-center px-6 py-10 lg:px-12">
-        <div className="w-full max-w-md mx-auto">
-          <div className="flex justify-end -mt-4 mb-4">
-            <ThemeToggle />
-          </div>
-          <div className="lg:hidden mb-8 flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 grid place-items-center text-gold-400 font-bold text-sm">
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle />
+      </div>
+
+      <div className="relative z-10 w-full max-w-md login-fade-up">
+        <div className="card border-border-subtle/60 bg-surface-elevated/80 backdrop-blur-xl shadow-[0_24px_60px_-20px_rgba(8,51,68,0.45)] p-8 sm:p-10">
+          <div className="flex flex-col items-center text-center">
+            <div className="size-14 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-900 grid place-items-center text-gold-400 font-bold text-lg shadow-lg shadow-brand-900/30 ring-1 ring-white/10">
               NEU
             </div>
-            <div>
-              <div className="text-sm font-semibold text-text-primary">NeuPay Console</div>
-              <div className="text-xs text-text-tertiary">Cashier &amp; Admin Dashboard</div>
-            </div>
+            <h1 className="mt-5 text-2xl font-bold tracking-tight login-shimmer-text">
+              {APP_NAME}
+            </h1>
+            <p className="mt-1.5 text-sm text-text-tertiary">
+              Sign in to continue to your dashboard.
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-text-primary tracking-tight">
-            Sign in to {APP_NAME}
-          </h2>
-          <p className="text-sm text-text-tertiary mt-1">
-            Use your NEU faculty / staff ID — or your NEU email.
-          </p>
 
           <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-4">
             <Input
-              label="Faculty / Staff ID"
-              hint="You can also sign in with your NEU email."
-              placeholder="NEU-ADMIN-0001"
+              label="Email or Staff ID"
+              placeholder="bgdduque@neupay.local"
               autoComplete="username"
               required
               value={principal}
@@ -136,14 +116,20 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-8 text-[11px] text-text-tertiary leading-relaxed">
-            For students and faculty: top-ups happen at the cashier's window or the canteen kiosk —
-            this dashboard isn't for you. {ENV_LABEL && (
-              <span className="font-semibold text-brand-700 dark:text-brand-300">Environment: {ENV_LABEL}</span>
-            )}
-          </p>
+          {ENV_LABEL && (
+            <p className="mt-6 text-center text-[11px] text-text-tertiary">
+              Environment:{' '}
+              <span className="font-semibold text-brand-700 dark:text-brand-300">
+                {ENV_LABEL}
+              </span>
+            </p>
+          )}
         </div>
-      </main>
+
+        <p className="mt-6 text-center text-[11px] text-text-tertiary">
+          Session ends when you close the tab.
+        </p>
+      </div>
     </div>
   );
 }

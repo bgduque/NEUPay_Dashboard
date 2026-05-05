@@ -10,7 +10,6 @@ const DashboardPage     = lazy(() => import('@/pages/DashboardPage'));
 const CashInPage        = lazy(() => import('@/pages/CashInPage'));
 const UsersPage         = lazy(() => import('@/pages/UsersPage'));
 const UserDetailPage    = lazy(() => import('@/pages/UserDetailPage'));
-const NewStaffPage      = lazy(() => import('@/pages/NewStaffPage'));
 const NewUserPage       = lazy(() => import('@/pages/NewUserPage'));
 const TransactionsPage  = lazy(() => import('@/pages/TransactionsPage'));
 const SettingsPage      = lazy(() => import('@/pages/SettingsPage'));
@@ -50,7 +49,6 @@ export default function App() {
         {/* Admin-only routes are guarded twice: once by Layout's RouteGuard
             (any staff) and once by adminOnly here. */}
         <Route element={<RouteGuard adminOnly><Layout /></RouteGuard>}>
-          <Route path="/staff/new" element={<NewStaffPage />} />
           <Route path="/users/new" element={<NewUserPage />} />
         </Route>
 

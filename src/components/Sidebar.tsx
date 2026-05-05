@@ -26,7 +26,6 @@ const ITEMS: NavItem[] = [
   { to: '/cash-in',      label: 'Cash In',      icon: Wallet },
   { to: '/users',        label: 'Users',        icon: Users },
   { to: '/transactions', label: 'Transactions', icon: Receipt },
-  { to: '/staff/new',    label: 'New Staff',    icon: UserPlus, adminOnly: true },
   { to: '/users/new',    label: 'New User',     icon: UserPlus, adminOnly: true },
   { to: '/settings',     label: 'Settings',     icon: Settings },
 ];

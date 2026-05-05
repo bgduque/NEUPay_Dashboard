@@ -1,7 +1,6 @@
 import { api } from './client';
 import type {
   ChangeRoleRequest,
-  CreateStaffRequest,
   CreateUserRequest,
   SpringPage,
   UserDetails,
@@ -38,11 +37,6 @@ export async function freezeUser(id: string): Promise<UserDetails> {
 
 export async function reinstateUser(id: string): Promise<UserDetails> {
   const { data } = await api.post<UserDetails>(`/admin/users/${id}/reinstate`);
-  return data;
-}
-
-export async function createStaff(req: CreateStaffRequest): Promise<UserDetails> {
-  const { data } = await api.post<UserDetails>('/admin/staff', req);
   return data;
 }
 
